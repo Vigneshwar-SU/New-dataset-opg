@@ -1,16 +1,23 @@
 import os
 import numpy as np
 from flask import Flask, render_template, request, send_from_directory
-from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing import image
 
-# ---------------- Flask App ----------------
+# Suppress TF warnings BEFORE importing model_loader
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
+# Import model_loader which applies patches
+from model_loader import load_model
+
+# ----------------Flask App ----------------
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-# ---------------- Load Model ----------------
-model = load_model('hypervision_OPG_model.h5', compile=False)
+# ----------------Load Model ----------------
+print("Loading model...")
+model = load_model('hypervision_OPG_model.h5')
+print("Model loaded successfully!")
 
 # ---------------- Model Settings ----------------
 img_size = (299, 299)
