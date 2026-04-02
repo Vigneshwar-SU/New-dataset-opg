@@ -15,7 +15,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image as RLImage, Table, TableStyle, PageBreak
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image as RLImage, Table, TableStyle, PageBreak, HRFlowable
 from reportlab.lib import colors
 
 # Suppress TF warnings BEFORE importing model_loader
@@ -619,6 +619,12 @@ def about():
     return render_template('about.html')
 
 # ----------------Download Scan Report as PDF ----------------
+# Helper function for confidence bar representation
+def _get_confidence_bar(percentage):
+    filled = int(percentage / 10)  # 10 blocks for 100%
+    empty = 10 - filled
+    return '█' * filled + '░' * empty
+
 @app.route('/download-report/<int:scan_id>', methods=['GET'])
 @login_required
 def download_report(scan_id):
@@ -630,147 +636,230 @@ def download_report(scan_id):
     
     # Create PDF
     pdf_buffer = BytesIO()
-    doc = SimpleDocTemplate(pdf_buffer, pagesize=letter, topMargin=0.5*inch, bottomMargin=0.5*inch)
+    doc = SimpleDocTemplate(pdf_buffer, pagesize=letter, topMargin=0.5*inch, bottomMargin=0.5*inch, leftMargin=0.5*inch, rightMargin=0.5*inch)
     
     # Styles
     styles = getSampleStyleSheet()
+    
     title_style = ParagraphStyle(
         'CustomTitle',
         parent=styles['Heading1'],
-        fontSize=24,
-        textColor=colors.HexColor('#3b82f6'),
-        spaceAfter=12,
-        alignment=1  # Center alignment
+        fontSize=28,
+        textColor=colors.HexColor('#0f172a'),
+        spaceAfter=6,
+        alignment=1,
+        fontName='Helvetica-Bold'
     )
+    
+    subtitle_style = ParagraphStyle(
+        'SubTitle',
+        parent=styles['Normal'],
+        fontSize=11,
+        textColor=colors.HexColor('#64748b'),
+        spaceAfter=18,
+        alignment=1,
+        fontName='Helvetica'
+    )
+    
     heading_style = ParagraphStyle(
         'CustomHeading',
         parent=styles['Heading2'],
-        fontSize=14,
-        textColor=colors.HexColor('#1a202c'),
+        fontSize=12,
+        textColor=colors.HexColor('#1e293b'),
         spaceAfter=10,
-        spaceBefore=10
+        spaceBefore=12,
+        fontName='Helvetica-Bold',
+        borderColor=colors.HexColor('#4facfe'),
+        borderWidth=2,
+        borderPadding=8,
+        backColor=colors.HexColor('#f0f9ff'),
+        leftIndent=0,
+        rightIndent=0
     )
     
     # Elements
     elements = []
     
-    # Title
-    elements.append(Paragraph("Dental OPG AI Diagnostic Report", title_style))
+    # Header with Logo/Title
+    elements.append(Paragraph("🦷 Dental OPG AI Diagnostic System", title_style))
+    elements.append(Spacer(1, 0.15*inch))
+    elements.append(Paragraph("Clinical Analysis Report", subtitle_style))
+    elements.append(Spacer(1, 0.1*inch))
+    
+    # Horizontal Line
+    line = HRFlowable(width='100%', thickness=2, color=colors.HexColor('#4facfe'))
+    elements.append(line)
     elements.append(Spacer(1, 0.2*inch))
     
-    # Report Info
+    # Patient & Report Info
     report_info = [
-        ['Patient ID:', current_user.username],
-        ['Scan Date:', scan.timestamp.strftime('%B %d, %Y')],
-        ['Scan Time:', scan.timestamp.strftime('%I:%M %p')],
-        ['Report Generated:', datetime.now().strftime('%B %d, %Y at %I:%M %p')]
+        ['Patient ID:', current_user.username, 'Report Date:', datetime.now().strftime('%B %d, %Y')],
+        ['Scan Date:', scan.timestamp.strftime('%B %d, %Y'), 'Scan Time:', scan.timestamp.strftime('%I:%M %p')]
     ]
     
-    info_table = Table(report_info, colWidths=[1.5*inch, 3.5*inch])
+    info_table = Table(report_info, colWidths=[1.2*inch, 2*inch, 1.2*inch, 2*inch])
     info_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#f0f4ff')),
-        ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#e0f2fe')),
+        ('BACKGROUND', (2, 0), (2, -1), colors.HexColor('#e0f2fe')),
+        ('TEXTCOLOR', (0, 0), (-1, -1), colors.HexColor('#0f172a')),
+        ('ALIGN', (0, 0), (0, -1), 'RIGHT'),
+        ('ALIGN', (1, 0), (1, -1), 'LEFT'),
+        ('ALIGN', (2, 0), (2, -1), 'RIGHT'),
+        ('ALIGN', (3, 0), (3, -1), 'LEFT'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
         ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, -1), 10),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
-        ('GRID', (0, 0), (-1, -1), 1, colors.grey)
+        ('FONTNAME', (2, 0), (2, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('LEFTPADDING', (0, 0), (-1, -1), 8),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#cbd5e1'))
     ]))
     
     elements.append(info_table)
-    elements.append(Spacer(1, 0.3*inch))
+    elements.append(Spacer(1, 0.25*inch))
     
-    # Add Scan Image
-    elements.append(Paragraph("OPG X-Ray Scan", heading_style))
+    # OPG Image Section
+    elements.append(Paragraph("📋 OPG X-Ray Scan", heading_style))
+    elements.append(Spacer(1, 0.08*inch))
     
     try:
-        # Get the image file path
         image_filename = scan.image_path.split('/')[-1]
         full_image_path = os.path.join(app.config['UPLOAD_FOLDER'], image_filename)
         
         if os.path.exists(full_image_path):
-            img = RLImage(full_image_path, width=4*inch, height=3*inch)
-            elements.append(img)
+            img = RLImage(full_image_path, width=5*inch, height=3.2*inch)
+            # Center the image using a table
+            img_container = Table([[img]], colWidths=[6*inch])
+            img_container.setStyle(TableStyle([
+                ('ALIGN', (0, 0), (0, 0), 'CENTER'),
+                ('VALIGN', (0, 0), (0, 0), 'MIDDLE'),
+                ('TOPPADDING', (0, 0), (0, 0), 5),
+                ('BOTTOMPADDING', (0, 0), (0, 0), 5),
+            ]))
+            elements.append(img_container)
             elements.append(Spacer(1, 0.2*inch))
     except:
         pass
     
-    # Prediction Result
-    elements.append(Paragraph("Analysis Results", heading_style))
+    # Analysis Results
+    elements.append(Paragraph("🔍 Analysis Results", heading_style))
+    elements.append(Spacer(1, 0.08*inch))
     
     result_table = [
         ['Predicted Classification:', scan.prediction],
         ['Filename:', scan.filename]
     ]
     
-    result_table_obj = Table(result_table, colWidths=[2*inch, 4*inch])
+    result_table_obj = Table(result_table, colWidths=[2.2*inch, 3.8*inch])
     result_table_obj.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#dbeafe')),
-        ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#dcfce7')),
+        ('BACKGROUND', (1, 0), (1, -1), colors.HexColor('#f0fdf4')),
+        ('TEXTCOLOR', (0, 0), (-1, -1), colors.HexColor('#0f172a')),
+        ('ALIGN', (0, 0), (0, -1), 'RIGHT'),
+        ('ALIGN', (1, 0), (1, -1), 'LEFT'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
         ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, -1), 10),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
-        ('GRID', (0, 0), (-1, -1), 1, colors.lightgrey)
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
+        ('TOPPADDING', (0, 0), (-1, -1), 10),
+        ('LEFTPADDING', (0, 0), (-1, -1), 8),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#cbd5e1'))
     ]))
     
     elements.append(result_table_obj)
-    elements.append(Spacer(1, 0.3*inch))
+    elements.append(Spacer(1, 0.25*inch))
     
-    # Confidence Scores
-    elements.append(Paragraph("Confidence Scores", heading_style))
+    # Confidence Scores with Better Visualization
+    elements.append(Paragraph("📊 Confidence Analysis", heading_style))
+    elements.append(Spacer(1, 0.08*inch))
     
     confidence_data = [
-        ['Classification', 'Confidence'],
-        ['Caries', f'{scan.caries_prob:.1f}%'],
-        ['Decayed Tooth', f'{scan.decayed_prob:.1f}%'],
-        ['Ectopic', f'{scan.ectopic_prob:.1f}%'],
-        ['Healthy Teeth', f'{scan.healthy_prob:.1f}%']
+        ['Classification', 'Score', 'Confidence Level'],
+        ['Caries', f'{scan.caries_prob:.1f}%', _get_confidence_bar(scan.caries_prob)],
+        ['Decayed Tooth', f'{scan.decayed_prob:.1f}%', _get_confidence_bar(scan.decayed_prob)],
+        ['Ectopic Tooth', f'{scan.ectopic_prob:.1f}%', _get_confidence_bar(scan.ectopic_prob)],
+        ['Healthy Teeth', f'{scan.healthy_prob:.1f}%', _get_confidence_bar(scan.healthy_prob)]
     ]
     
-    conf_table = Table(confidence_data, colWidths=[2.5*inch, 2*inch])
+    conf_table = Table(confidence_data, colWidths=[1.8*inch, 1*inch, 2.2*inch])
     conf_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#3b82f6')),
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4facfe')),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('ALIGN', (0, 0), (0, 0), 'LEFT'),
+        ('ALIGN', (1, 0), (1, 0), 'CENTER'),
+        ('ALIGN', (2, 0), (2, 0), 'CENTER'),
+        ('ALIGN', (0, 1), (0, -1), 'LEFT'),
+        ('ALIGN', (1, 1), (1, -1), 'CENTER'),
+        ('ALIGN', (2, 1), (2, -1), 'CENTER'),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, -1), 11),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('TOPPADDING', (0, 0), (-1, 0), 12),
-        ('BOTTOMPADDING', (0, 1), (-1, -1), 10),
-        ('TOPPADDING', (0, 1), (-1, -1), 10),
-        ('GRID', (0, 0), (-1, -1), 1, colors.grey),
-        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f0f4ff')])
+        ('FONTSIZE', (0, 0), (-1, 0), 10),
+        ('FONTSIZE', (0, 1), (-1, -1), 9),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+        ('TOPPADDING', (0, 0), (-1, 0), 10),
+        ('BOTTOMPADDING', (0, 1), (-1, -1), 8),
+        ('TOPPADDING', (0, 1), (-1, -1), 8),
+        ('LEFTPADDING', (0, 0), (-1, -1), 6),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#cbd5e1')),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8fafc')])
     ]))
     
     elements.append(conf_table)
+    elements.append(Spacer(1, 0.25*inch))
+    
+    # Classification Guide
+    elements.append(Paragraph("📚 Classification Guide", heading_style))
+    elements.append(Spacer(1, 0.08*inch))
+    
+    guide_data = [
+        ['Caries', 'Tooth decay and cavity formation in the dental structure'],
+        ['Decayed Tooth', 'Severely decayed or damaged teeth requiring dental intervention'],
+        ['Ectopic Tooth', 'Abnormally positioned or impacted teeth'],
+        ['Healthy Teeth', 'Normal, healthy tooth structures with no visible issues']
+    ]
+    
+    guide_table = Table(guide_data, colWidths=[1.5*inch, 4.5*inch])
+    guide_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#f0e7ff')),
+        ('TEXTCOLOR', (0, 0), (-1, -1), colors.HexColor('#1e293b')),
+        ('ALIGN', (0, 0), (0, -1), 'CENTER'),
+        ('ALIGN', (1, 0), (1, -1), 'LEFT'),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('LEFTPADDING', (0, 0), (-1, -1), 6),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#e9d5ff'))
+    ]))
+    
+    elements.append(guide_table)
     elements.append(Spacer(1, 0.3*inch))
-    
-    # Classification Legend
-    elements.append(Paragraph("Classification Categories", heading_style))
-    
-    legend_text = """
-    <b>Caries:</b> Tooth decay and cavity formation<br/>
-    <b>Decayed Tooth:</b> Severely decayed or damaged teeth<br/>
-    <b>Ectopic:</b> Abnormally positioned teeth<br/>
-    <b>Healthy Teeth:</b> Normal, healthy tooth structures<br/>
-    """
-    elements.append(Paragraph(legend_text, styles['Normal']))
-    elements.append(Spacer(1, 0.2*inch))
     
     # Disclaimer
     disclaimer_style = ParagraphStyle(
         'Disclaimer',
         parent=styles['Normal'],
-        fontSize=9,
-        textColor=colors.HexColor('#7c3aed'),
-        alignment=0
+        fontSize=8,
+        textColor=colors.HexColor('#92400e'),
+        alignment=0,
+        borderColor=colors.HexColor('#fbbf24'),
+        borderWidth=1,
+        borderPadding=12,
+        backColor=colors.HexColor('#fffbeb'),
+        leftIndent=8,
+        rightIndent=8,
+        spaceAfter=10
     )
     
     disclaimer_text = """
-    <b>DISCLAIMER:</b> This AI diagnostic tool is intended for educational and research purposes only. 
-    It should not be used as a substitute for professional dental diagnosis or treatment. 
-    All results should be reviewed by a qualified dental professional before clinical use.
+    <b>⚠️ IMPORTANT DISCLAIMER:</b> This AI diagnostic tool is intended for educational and research purposes only. 
+    It should not be used as a substitute for professional dental diagnosis or treatment. All results must be reviewed 
+    and validated by a qualified dental professional before any clinical use or patient communication.
     """
     elements.append(Paragraph(disclaimer_text, disclaimer_style))
     
