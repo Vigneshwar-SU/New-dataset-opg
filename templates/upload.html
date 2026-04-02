@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Scan - Dental OPG AI</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
+    <style>
+        body, html { height: 100vh; overflow: hidden; }
+        .upload-page-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 40px;
+            height: 100%;
+            overflow-y: auto;
+        }
+        .ai-scanner-panel {
+            background: rgba(17, 25, 40, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 50px;
+            width: 100%;
+            max-width: 900px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.5s ease;
+        }
+        @keyframes fadeIn { from {opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
+        .upload-title-box {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .upload-title-box h1 {
+            font-size: 2.2rem;
+            color: #fff;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .upload-title-box p { color: #a3b8cc; font-size: 1.1rem; }
+        .dropzone-mega {
+            border: 2px dashed rgba(79, 172, 254, 0.5);
+            background: rgba(79, 172, 254, 0.05);
+            border-radius: 20px;
+            padding: 80px 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .dropzone-mega:hover, .dropzone-mega.drag-over {
+            border-color: #4facfe;
+            background: rgba(79, 172, 254, 0.15);
+            transform: translateY(-2px);
+        }
+        .dropzone-mega i {
+            font-size: 5rem;
+            color: #4facfe;
+            margin-bottom: 25px;
+            transition: transform 0.3s;
+        }
+        .dropzone-mega:hover i { transform: scale(1.1); }
+        .dropzone-mega h3 { font-size: 1.6rem; margin-bottom: 10px; color: #fff; }
+        .file-chosen-status {
+            display: none;
+            margin-top: 20px;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: #4facfe;
+            font-weight: 500;
+            background: rgba(0,0,0,0.3);
+            padding: 10px 20px;
+            border-radius: 20px;
+            width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 20px;
+            margin-top: 40px;
+        }
+        .btn-analyze {
+            flex: 2;
+            padding: 18px;
+            font-size: 1.2rem;
+            border-radius: 15px;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            border: none;
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .btn-analyze.ready {
+            opacity: 1;
+            cursor: pointer;
+            box-shadow: 0 5px 20px rgba(79, 172, 254, 0.3);
+        }
+        .btn-analyze.ready:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(79, 172, 254, 0.5);
+        }
+        .btn-back {
+            flex: 1;
+            padding: 18px 30px;
+            font-size: 1.1rem;
+            border-radius: 15px;
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            text-align: center;
+            line-height: normal;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-back:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.4); }
+        .loading-overlay {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(17, 25, 40, 0.9);
+            z-index: 10;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(5px);
+        }
+        .scanner-beam {
+            width: 70%;
+            height: 3px;
+            background: #00f2fe;
+            box-shadow: 0 0 15px 2px #00f2fe;
+            animation: scan 2s infinite ease-in-out;
+            position: absolute;
+            top: 50%;
+        }
+        @keyframes scan {
+            0% { transform: translateY(-80px); }
+            50% { transform: translateY(80px); }
+            100% { transform: translateY(-80px); }
+        }
+        
+        .results-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-top: 20px;
+        }
+        .preview-img-container {
+            border-radius: 15px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+            position: relative;
+            background: #000;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .preview-img-container img {
+            width: 100%;
+            object-fit: contain;
+            display: block;
+            opacity: 0.8;
+            transition: opacity 0.3s;
+        }
+        .preview-img-container:hover img { opacity: 1; }
+        .result-details {
+            background: rgba(0,0,0,0.25);
+            padding: 30px;
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .result-label {
+            color: #a3b8cc;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .result-value {
+            font-size: 2.2rem;
+            color: #fff;
+            margin-bottom: 30px;
+            font-weight: 700;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+        .result-value.danger { color: #ff6b6b; }
+        .bar-container {
+            margin-bottom: 15px;
+        }
+        .bar-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+            color: #d1d5db;
+        }
+        .bar-track {
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 1s ease-out;
+        }
+        .scan-overlay-result {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom, rgba(0,242,254,0.1) 0%, rgba(0,0,0,0) 10%);
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <i class="fa-solid fa-tooth"></i>
+            <span>Dental OPG AI</span>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/" class="nav-link {% if request.path == '/' %}active{% endif %}">
+                <i class="fa-solid fa-house"></i> Dashboard
+            </a>
+            <a href="/upload" class="nav-link {% if request.path.startswith('/upload') %}active{% endif %}">
+                <i class="fa-solid fa-cloud-arrow-up"></i> Upload Scan
+            </a>
+            <a href="/scan-history" class="nav-link {% if request.path == '/scan-history' %}active{% endif %}">
+                <i class="fa-solid fa-history"></i> Scan History
+            </a>
+            <a href="/model-info" class="nav-link {% if request.path == '/model-info' %}active{% endif %}">
+                <i class="fa-solid fa-microchip"></i> Model Info
+            </a>
+            <a href="/about" class="nav-link {% if request.path == '/about' %}active{% endif %}">
+                <i class="fa-solid fa-circle-info"></i> About
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Topbar -->
+        <header class="topbar">
+            <div class="page-title">
+                <i class="fa-solid fa-cloud-arrow-up" style="color: var(--accent); font-size: 1.8rem;"></i>
+                <h2>Upload & Analyze Scan</h2>
+            </div>
+            <div class="user-profile">
+                <div class="profile-info">
+                    <i class="fa-solid fa-circle-user"></i>
+                    <span class="username">{{ current_user.username }}</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="upload-page-container">
+            <div class="ai-scanner-panel">
+                
+                <div class="upload-title-box">
+                    <h1><i class="fa-solid fa-microscope" style="margin-right:15px; color:#4facfe;"></i>AI Image Analysis</h1>
+                    <p>Upload a panoramic dental X-ray for instant structural analysis and diagnostics</p>
+                </div>
+
+                {% if not prediction %}
+                <!-- Upload Form Mode -->
+                <form method="POST" action="/upload" enctype="multipart/form-data" id="uploadForm" onsubmit="showLoading()">
+                    <div class="dropzone-mega" id="dropzone" onclick="document.getElementById('fileInput').click()">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        <h3>Drop your OPG Scan here</h3>
+                        <p style="color: #a3b8cc; font-size: 1rem;">or click to browse from your device</p>
+                        <input type="file" name="image" id="fileInput" accept="image/*" required style="display: none;">
+                        
+                        <div class="file-chosen-status" id="fileStatus">
+                            <i class="fa-solid fa-file-image"></i>
+                            <span id="filename" style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">image.jpg</span>
+                        </div>
+                        
+                        <div class="loading-overlay" id="loadingOverlay">
+                            <div class="scanner-beam"></div>
+                            <div style="font-size:3rem; color:#4facfe;"><i class="fa-solid fa-brain fa-fade"></i></div>
+                            <p style="color: #fff; margin-top: 20px; font-size:1.2rem; letter-spacing:1px;">AI is analyzing dental structures...</p>
+                        </div>
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <a href="/" class="btn-back"><i class="fa-solid fa-arrow-left" style="margin-right:10px;"></i> Dashboard</a>
+                        <button type="submit" class="btn-analyze" id="analyzeBtn" disabled>
+                            Start AI Analysis <i class="fa-solid fa-wand-magic-sparkles" style="margin-left:10px;"></i>
+                        </button>
+                    </div>
+                </form>
+
+                {% else %}
+                <!-- Results Mode -->
+                <div class="results-container">
+                    <!-- Image Area -->
+                    <div class="preview-img-container">
+                        <img src="{{ image_path }}" alt="Analyzed Scan">
+                        <div class="scan-overlay-result"></div>
+                    </div>
+                    
+                    <!-- Prediction Analytics -->
+                    <div class="result-details">
+                        <span class="result-label">Diagnostic Prediction</span>
+                        <div class="result-value {% if 'Invalid' in prediction %}danger{% endif %}">
+                            {% if 'Invalid' in prediction %}
+                                <i class="fa-solid fa-circle-xmark" style="margin-right:10px; font-size: 1.5rem; color: #ff6b6b;"></i>
+                            {% endif %}
+                            {{ prediction }}
+                        </div>
+                        
+                        {% if class_prob_pairs %}
+                            <span class="result-label" style="margin-top: 30px; margin-bottom: 20px;">Confidence Breakdown</span>
+                            {% for cls, prob in class_prob_pairs %}
+                                {% set percentage = (prob * 100)|round(1) %}
+                                <div class="bar-container">
+                                    <div class="bar-header">
+                                        <span style="{% if cls == prediction %}color: #fff; font-weight:600;{% endif %}">{{ cls }}</span>
+                                        <span style="{% if cls == prediction %}color: #4facfe; font-weight:600;{% endif %}">{{ percentage }}%</span>
+                                    </div>
+                                    <div class="bar-track">
+                                        <div class="bar-fill" style="width: {{ percentage }}%; background: {% if cls == prediction %}#00f2fe{% else %}rgba(79,172,254,0.3){% endif %};"></div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                            
+                            <div style="margin-top: 30px; padding: 15px; background: rgba(255,255,255,0.05); border-left: 3px solid #4facfe; border-radius: 5px; font-size: 0.85rem; color: #a3b8cc; line-height: 1.5;">
+                                <i class="fa-solid fa-circle-info" style="margin-right:8px; color: #4facfe;"></i>
+                                Notice: This AI analysis is intended as a clinical aid and does not substitute a professional medical diagnosis.
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="action-buttons" style="margin-top: 40px;">
+                    <a href="/" class="btn-back"><i class="fa-solid fa-house" style="margin-right:10px;"></i> Dashboard</a>
+                    <a href="/upload" class="btn-analyze ready" style="text-decoration:none; text-align:center; display:flex; align-items:center; justify-content:center;">
+                        Analyze Another Scan <i class="fa-solid fa-plus" style="margin-left:10px;"></i>
+                    </a>
+                </div>
+                {% endif %}
+                
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('fileInput');
+    const fileStatus = document.getElementById('fileStatus');
+    const filenameLabel = document.getElementById('filename');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+
+    if (dropzone && fileInput) {
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropzone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropzone.addEventListener(eventName, () => dropzone.classList.add('drag-over'), false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropzone.addEventListener(eventName, () => dropzone.classList.remove('drag-over'), false);
+        });
+
+        dropzone.addEventListener('drop', (e) => {
+            let dt = e.dataTransfer;
+            let files = dt.files;
+            if (files.length) {
+                fileInput.files = files;
+                updateFileUI(files[0].name);
+            }
+        });
+
+        fileInput.addEventListener('change', function() {
+            if (this.files.length) {
+                updateFileUI(this.files[0].name);
+            }
+        });
+
+        function updateFileUI(name) {
+            filenameLabel.textContent = name;
+            fileStatus.style.display = 'flex';
+            analyzeBtn.disabled = false;
+            analyzeBtn.classList.add('ready');
+        }
+    }
+
+    function showLoading() {
+        if (!analyzeBtn.disabled) {
+            document.getElementById('loadingOverlay').style.display = 'flex';
+        }
+    }
+</script>
+
+</body>
+</html>

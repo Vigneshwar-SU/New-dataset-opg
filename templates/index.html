@@ -21,19 +21,19 @@
             <span>Dental OPG AI</span>
         </div>
         <nav class="sidebar-nav">
-            <a href="#" class="nav-link active" onclick="switchTab('dashboard')">
+            <a href="/" class="nav-link {% if request.path == '/' %}active{% endif %}">
                 <i class="fa-solid fa-house"></i> Dashboard
             </a>
-            <a href="#" class="nav-link" onclick="switchTab('upload')">
+            <a href="/upload" class="nav-link {% if request.path.startswith('/upload') %}active{% endif %}">
                 <i class="fa-solid fa-cloud-arrow-up"></i> Upload Scan
             </a>
-            <a href="#" class="nav-link" onclick="switchTab('prediction')">
-                <i class="fa-solid fa-chart-pie"></i> Prediction
+            <a href="/scan-history" class="nav-link {% if request.path == '/scan-history' %}active{% endif %}">
+                <i class="fa-solid fa-history"></i> Scan History
             </a>
-            <a href="#" class="nav-link" onclick="switchTab('modelinfo')">
+            <a href="/model-info" class="nav-link {% if request.path == '/model-info' %}active{% endif %}">
                 <i class="fa-solid fa-microchip"></i> Model Info
             </a>
-            <a href="#" class="nav-link" onclick="switchTab('about')">
+            <a href="/about" class="nav-link {% if request.path == '/about' %}active{% endif %}">
                 <i class="fa-solid fa-circle-info"></i> About
             </a>
         </nav>
@@ -43,12 +43,9 @@
     <main class="main-content">
         <!-- Topbar -->
         <header class="topbar">
-            <div class="top-nav">
-                <a href="#" onclick="switchTab('dashboard')">Home</a>
-                <a href="#" onclick="switchTab('upload')">Upload</a>
-                <a href="#" onclick="switchTab('prediction')">Results</a>
-                <a href="#" onclick="switchTab('modelinfo')">Model Info</a>
-                <a href="#" onclick="switchTab('about')">About</a>
+            <div class="page-title">
+                <i class="fa-solid fa-house" style="color: var(--accent); font-size: 1.8rem;"></i>
+                <h2>Dashboard</h2>
             </div>
             <div class="user-profile">
                 <div class="profile-dropdown">
@@ -91,7 +88,7 @@
                         </div>
                     </div>
                     
-                    <button class="btn-primary" onclick="switchTab('upload')">
+                    <button class="btn-primary" onclick="window.location.href='/upload'">
                         Start Diagnosis <i class="fa-solid fa-arrow-right"></i>
                     </button>
                 </div>
@@ -199,142 +196,10 @@
                     <div class="glass-card cta-card">
                         <h2>Ready to Get Started?</h2>
                         <p>Upload an OPG X-ray image now and experience the power of AI-driven dental diagnostics</p>
-                        <button class="btn-primary" onclick="switchTab('upload')">
+                        <button class="btn-primary" onclick="window.location.href='/upload'">
                             Upload Now <i class="fa-solid fa-cloud-arrow-up"></i>
                         </button>
                     </div>
-                </div>
-            </section>
-
-            <!-- UPLOAD SCAN TAB -->
-            <section id="upload" class="tab-content">
-                <h2>Upload OPG X-Ray</h2>
-                <p class="section-desc">AI-Powered Analysis of Panoramic Dental X-ray Images.</p>
-                
-                <div class="glass-card upload-card">
-                    <form method="post" enctype="multipart/form-data" id="uploadForm">
-                        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
-                            <i class="fa-regular fa-image" style="font-size: 3rem; margin-bottom: 1rem; color: #4facfe;"></i>
-                            <p>Drag & drop an OPG X-ray image to upload or click <span class="text-primary">Browse</span></p>
-                            <input type="file" name="image" id="fileInput" accept="image/*" required style="display: none;">
-                        </div>
-                        <div class="selected-file-name" id="fileNameDisplay" style="margin-top: 10px; color: #a3b8cc; text-align: center; font-size: 0.9rem;"></div>
-                        <button type="submit" class="btn-primary btn-block" style="margin-top: 20px;">
-                            Analyse Image
-                        </button>
-                    </form>
-                </div>
-                
-                {% if not prediction %}
-                <div class="glass-card history-placeholder" style="margin-top: 20px; opacity: 0.5;">
-                    <h3>Recent History</h3>
-                    <p style="font-size: 0.85rem; color: #8892b0;">Upload an image to see analysis history.</p>
-                </div>
-                {% endif %}
-            </section>
-
-            <!-- PREDICTION / RESULTS TAB. -->
-            <section id="prediction" class="tab-content {% if prediction %}active-tab-override{% endif %}">
-                <h2>Analysis Result</h2>
-                <p class="section-desc">Detailed breakdown of the AI diagnostic prediction.</p>
-                
-                {% if prediction %}
-                <div class="results-grid">
-                    <!-- Image View -->
-                    <div class="glass-card image-preview-card">
-                        <div class="scan-ui-overlay">
-                            <img src="{{ image_path }}" alt="Uploaded OPG" class="result-img">
-                            <div class="scanning-line"></div>
-                        </div>
-                    </div>
-                    
-                    <!-- Prediction Stats -->
-                    <div class="glass-card stats-card">
-                        <div class="main-prediction">
-                            <div class="badge">Predicted Class</div>
-                            <h3>{{ prediction }}</h3>
-                        </div>
-                        
-                        <div class="separator"></div>
-                        
-                        <div class="progress-bars">
-                            {% if class_prob_pairs %}
-                                {% for cls, prob in class_prob_pairs %}
-                                    {% set percentage = (prob * 100)|round(1) %}
-                                    <div class="bar-row">
-                                        <div class="bar-labels">
-                                            <span>{{ cls }}</span>
-                                            <span>{{ percentage }}%</span>
-                                        </div>
-                                        <div class="progress-track">
-                                            <!-- Highlight the specific class if it matches the main prediction -->
-                                            <div class="progress-fill {% if cls == prediction %}active-fill{% endif %}" style="width: {{ percentage }}%;"></div>
-                                        </div>
-                                    </div>
-                                {% endfor %}
-                            {% endif %}
-                        </div>
-                        
-                        <div class="disclaimer">
-                            <i class="fa-solid fa-triangle-exclamation"></i>
-                            Note: This tool is intended as a research aid and should not be used for clinical diagnosis.
-                        </div>
-                    </div>
-                </div>
-                {% else %}
-                <div class="glass-card empty-state">
-                    <i class="fa-solid fa-clipboard-list" style="font-size: 3rem; margin-bottom: 1rem; color: #4facfe;"></i>
-                    <h3>No Analysis Results</h3>
-                    <p>Please upload an scan in the Upload tab to generate a prediction.</p>
-                    <button type="button" class="btn-outline" style="margin-top: 20px;" onclick="switchTab('upload')">Go to Upload</button>
-                </div>
-                {% endif %}
-            </section>
-
-            <!-- MODEL INFO TAB -->
-            <section id="modelinfo" class="tab-content">
-                <h2>Model Configuration</h2>
-                <div class="glass-card info-card" style="margin-top: 20px;">
-                    <div class="info-grid">
-                        <div class="info-item">
-                            <h4><i class="fa-solid fa-network-wired"></i> Architecture</h4>
-                            <p>Convolutional Neural Network (CNN)</p>
-                        </div>
-                        <div class="info-item">
-                            <h4><i class="fa-solid fa-code"></i> Framework</h4>
-                            <p>TensorFlow / Keras</p>
-                        </div>
-                        <div class="info-item">
-                            <h4><i class="fa-solid fa-bullseye"></i> Training Accuracy</h4>
-                            <p>92.0%</p>
-                        </div>
-                        <div class="info-item">
-                            <h4><i class="fa-solid fa-database"></i> Dataset</h4>
-                            <p>Panoramic Dental X-ray Dataset spanning healthy and diseased cases.</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- ABOUT TAB -->
-            <section id="about" class="tab-content">
-                <h2>About This System</h2>
-                <p class="section-desc">This AI system analyzes panoramic dental X-ray images to assist health professionals by detecting abnormal conditions.</p>
-                
-                <div class="glass-card text-content">
-                    <div class="disease-icons">
-                        <div class="d-icon"><i class="fa-solid fa-tooth"></i> Caries</div>
-                        <div class="d-icon"><i class="fa-solid fa-tooth" style="color: #ff6b6b;"></i> Decayed Tooth</div>
-                        <div class="d-icon"><i class="fa-solid fa-tooth" style="color: #fca311;"></i> Ectopic Tooth</div>
-                    </div>
-                    
-                    <h3 style="margin-top: 30px; margin-bottom: 10px;">Objectives</h3>
-                    <ul class="styled-list">
-                        <li>Preliminary screening tool for dentists.</li>
-                        <li>High speed instant classification of standard OPGs.</li>
-                        <li>Data backed visualization of confidence scores.</li>
-                        <li>Reducing risk of unnoted conditions in routine exams.</li>
-                    </ul>
                 </div>
             </section>
         </div>
@@ -345,28 +210,47 @@
 <script>
     // Tab Switching Logic
     function switchTab(tabId) {
+        console.log('Switching to tab:', tabId);
+        
+        // Hide all tabs
         document.querySelectorAll('.tab-content').forEach(tab => {
             tab.classList.remove('active-tab');
             tab.classList.remove('active-tab-override');
         });
-        document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
         
-        document.getElementById(tabId).classList.add('active-tab');
+        // Show the selected tab
+        const selectedTab = document.getElementById(tabId);
+        if (selectedTab) {
+            selectedTab.classList.add('active-tab');
+            console.log('Tab activated:', tabId);
+        } else {
+            console.error('Tab not found:', tabId);
+        }
         
-        document.querySelectorAll('.nav-link').forEach(link => {
-            if(link.getAttribute('onclick').includes(tabId)) {
-                link.classList.add('active');
+        // Only highlight dashboard as the active tab on this page
+        if(tabId === 'dashboard') {
+            const dashboardLink = document.querySelector('a[href="/"]');
+            if (dashboardLink) {
+                dashboardLink.classList.remove('active');
+                dashboardLink.classList.add('active');
             }
-        });
+        }
     }
 
     // Auto-switch to prediction if backend returned a result
     window.onload = function() {
+        console.log('Page loaded, initializing tabs');
         const hasPrediction = document.querySelector('.active-tab-override');
         if (hasPrediction) {
             switchTab('prediction');
         } else {
             switchTab('dashboard');
+            // Highlight Dashboard in sidebar
+            const dashboardLink = document.querySelector('a[href="/"]');
+            if (dashboardLink) {
+                dashboardLink.classList.add('active');
+                console.log('Dashboard link highlighted');
+            }
         }
     };
 

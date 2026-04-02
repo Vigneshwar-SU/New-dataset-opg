@@ -21,11 +21,20 @@
             <span>Dental OPG AI</span>
         </div>
         <nav class="sidebar-nav">
-            <a href="/" class="nav-link">
+            <a href="/" class="nav-link {% if request.path == '/' %}active{% endif %}">
                 <i class="fa-solid fa-house"></i> Dashboard
             </a>
-            <a href="/scan-history" class="nav-link active">
+            <a href="/upload" class="nav-link {% if request.path.startswith('/upload') %}active{% endif %}">
+                <i class="fa-solid fa-cloud-arrow-up"></i> Upload Scan
+            </a>
+            <a href="/scan-history" class="nav-link {% if request.path == '/scan-history' %}active{% endif %}">
                 <i class="fa-solid fa-history"></i> Scan History
+            </a>
+            <a href="/model-info" class="nav-link {% if request.path == '/model-info' %}active{% endif %}">
+                <i class="fa-solid fa-microchip"></i> Model Info
+            </a>
+            <a href="/about" class="nav-link {% if request.path == '/about' %}active{% endif %}">
+                <i class="fa-solid fa-circle-info"></i> About
             </a>
         </nav>
     </aside>
@@ -34,9 +43,9 @@
     <main class="main-content">
         <!-- Topbar -->
         <header class="topbar">
-            <div class="top-nav">
-                <a href="/">Home</a>
-                <a href="/scan-history">Scan History</a>
+            <div class="page-title">
+                <i class="fa-solid fa-history" style="color: var(--accent); font-size: 1.8rem;"></i>
+                <h2>Scan History</h2>
             </div>
             <div class="user-profile">
                 <div class="profile-dropdown">

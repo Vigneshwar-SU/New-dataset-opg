@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model Info - Dental OPG AI Diagnostic System</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
+</head>
+<body>
+
+<div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <i class="fa-solid fa-tooth"></i>
+            <span>Dental OPG AI</span>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/" class="nav-link {% if request.path == '/' %}active{% endif %}">
+                <i class="fa-solid fa-house"></i> Dashboard
+            </a>
+            <a href="/upload" class="nav-link {% if request.path.startswith('/upload') %}active{% endif %}">
+                <i class="fa-solid fa-cloud-arrow-up"></i> Upload Scan
+            </a>
+            <a href="/scan-history" class="nav-link {% if request.path == '/scan-history' %}active{% endif %}">
+                <i class="fa-solid fa-history"></i> Scan History
+            </a>
+            <a href="/model-info" class="nav-link {% if request.path == '/model-info' %}active{% endif %}">
+                <i class="fa-solid fa-microchip"></i> Model Info
+            </a>
+            <a href="/about" class="nav-link {% if request.path == '/about' %}active{% endif %}">
+                <i class="fa-solid fa-circle-info"></i> About
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Topbar -->
+        <header class="topbar">
+            <div class="page-title">
+                <i class="fa-solid fa-microchip" style="color: var(--accent); font-size: 1.8rem;"></i>
+                <h2>Model Info</h2>
+            </div>
+            <div class="user-profile">
+                <div class="profile-dropdown">
+                    <div class="profile-info" onclick="toggleProfileMenu()">
+                        <i class="fa-solid fa-circle-user"></i>
+                        <span class="username">{{ current_user.username }}</span>
+                        <i class="fa-solid fa-chevron-down" style="font-size: 0.8rem;"></i>
+                    </div>
+                    <div class="profile-menu" id="profileMenu">
+                        <a href="/scan-history" class="menu-item">
+                            <i class="fa-solid fa-history"></i> Scan History
+                        </a>
+                        <a href="/logout" class="menu-item logout-item">
+                            <i class="fa-solid fa-sign-out-alt"></i> Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content Area -->
+        <div class="content-area">
+            <h2>Model Configuration</h2>
+            <div class="glass-card info-card" style="margin-top: 20px;">
+                <div class="info-grid">
+                    <div class="info-item">
+                        <h4><i class="fa-solid fa-network-wired"></i> Architecture</h4>
+                        <p>Convolutional Neural Network (CNN)</p>
+                    </div>
+                    <div class="info-item">
+                        <h4><i class="fa-solid fa-code"></i> Framework</h4>
+                        <p>TensorFlow / Keras</p>
+                    </div>
+                    <div class="info-item">
+                        <h4><i class="fa-solid fa-bullseye"></i> Training Accuracy</h4>
+                        <p>92.0%</p>
+                    </div>
+                    <div class="info-item">
+                        <h4><i class="fa-solid fa-database"></i> Dataset</h4>
+                        <p>Panoramic Dental X-ray Dataset spanning healthy and diseased cases.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Scripts -->
+<script>
+    function toggleProfileMenu() {
+        const menu = document.getElementById('profileMenu');
+        menu.classList.toggle('active');
+    }
+    
+    // Close profile menu when clicking outside
+    document.addEventListener('click', function(event) {
+        const menu = document.getElementById('profileMenu');
+        const profileInfo = document.querySelector('.profile-info');
+        if (!event.target.closest('.profile-dropdown')) {
+            menu.classList.remove('active');
+        }
+    });
+</script>
+</body>
+</html>

@@ -106,6 +106,11 @@ body::before {
     min-height: 100vh;
 }
 
+.app-container > main {
+    margin-left: 260px;
+    flex: 1;
+}
+
 /* --- SIDEBAR --- */
 .sidebar {
     width: 260px;
@@ -116,6 +121,11 @@ body::before {
     box-shadow: var(--shadow-light);
     z-index: 10;
     transition: background-color 0.4s ease, border-color 0.4s ease;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    overflow-y: auto;
 }
 
 .sidebar-header {
@@ -179,18 +189,19 @@ body::before {
 }
 
 .topbar {
-    height: 70px;
+    height: 75px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 0 40px;
-    border-bottom: 1px solid var(--glass-border);
-    background: var(--topbar-bg);
-    backdrop-filter: blur(10px);
+    border-bottom: 2px solid var(--glass-border);
+    background: linear-gradient(180deg, rgba(20, 30, 50, 0.7) 0%, rgba(15, 25, 45, 0.6) 100%);
+    backdrop-filter: blur(15px);
     position: sticky;
     top: 0;
     z-index: 5;
-    transition: background 0.4s ease, border-color 0.4s ease;
+    transition: all 0.4s ease;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
 .top-nav {
@@ -208,6 +219,34 @@ body::before {
 
 .top-nav a:hover {
     color: var(--text-primary);
+}
+
+.page-title {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex: 1;
+}
+
+.page-title i {
+    text-shadow: 0 0 20px rgba(79, 172, 254, 0.4);
+    transition: all 0.3s ease;
+}
+
+.page-title h2 {
+    font-size: 1.8rem;
+    background: linear-gradient(135deg, var(--accent), var(--accent-glow));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    position: relative;
+}
+
+.topbar:hover .page-title i {
+    filter: drop-shadow(0 0 8px rgba(79, 172, 254, 0.6));
 }
 
 .user-profile {
@@ -1044,11 +1083,16 @@ h2 {
     .app-container {
         flex-direction: column;
     }
+    .app-container > main {
+        margin-left: 0;
+    }
     .sidebar {
         width: 100%;
         height: auto;
+        position: relative;
         flex-direction: row;
         overflow-x: auto;
+        overflow-y: visible;
     }
     .sidebar-header {
         display: none;

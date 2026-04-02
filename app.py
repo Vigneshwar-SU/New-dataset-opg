@@ -34,6 +34,19 @@ app.config['SECRET_KEY'] = 'your_secret_key_change_this'  # Change this to a ran
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.abspath("users.db")}'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
+# Add cache control to prevent form resubmission issues
+@app.after_request
+def add_header(response):
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
+
+# Error handler for 405 Method Not Allowed
+@app.errorhandler(405)
+def method_not_allowed(error):
+    return redirect(url_for('index'))
+
 # ----------------Database ----------------
 db = SQLAlchemy(app)
 
@@ -299,7 +312,7 @@ class_dict = {
 classes = list(class_dict.values())
 
 # ---------------- Serve Uploaded Images ----------------
-@app.route('/uploads/<filename>')
+@app.route('/uploads/<filename>', methods=['GET'])
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
@@ -483,16 +496,22 @@ def reset_password():
     return render_template('reset_password.html', token=token)
 
 # ----------------Logout Route ----------------
-@app.route('/logout')
+@app.route('/logout', methods=['GET', 'POST'])
 @login_required
 def logout():
     logout_user()
     return redirect(url_for('login'))
 
 # ----------------Main Route ----------------
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/', methods=['GET'])
 @login_required
 def index():
+    return render_template('index.html')
+
+# ----------------Upload & Analyze Route ----------------
+@app.route('/upload', methods=['GET', 'POST'])
+@login_required
+def upload():
     prediction_label = None
     class_prob_pairs = None
     image_path = None
@@ -574,21 +593,33 @@ def index():
                 db.session.commit()
 
     return render_template(
-        'index.html',
+        'upload.html',
         prediction=prediction_label,
         class_prob_pairs=class_prob_pairs,
         image_path=image_path
     )
 
 # ----------------Scan History Route ----------------
-@app.route('/scan-history')
+@app.route('/scan-history', methods=['GET'])
 @login_required
 def scan_history():
     scans = ScanHistory.query.filter_by(user_id=current_user.id).order_by(ScanHistory.timestamp.desc()).all()
     return render_template('scan_history.html', scans=scans)
 
+# ----------------Model Info Route ----------------
+@app.route('/model-info', methods=['GET'])
+@login_required
+def model_info():
+    return render_template('model_info.html')
+
+# ----------------About Route ----------------
+@app.route('/about', methods=['GET'])
+@login_required
+def about():
+    return render_template('about.html')
+
 # ----------------Download Scan Report as PDF ----------------
-@app.route('/download-report/<int:scan_id>')
+@app.route('/download-report/<int:scan_id>', methods=['GET'])
 @login_required
 def download_report(scan_id):
     scan = ScanHistory.query.get_or_404(scan_id)
