@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify OTP - Dental OPG AI Diagnostic System</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            /* Dark Theme */
+            --bg-main: #060b19;
+            --sidebar-bg: #091227;
+            --glass-bg: rgba(16, 26, 50, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --accent: #3b82f6;
+            --accent-glow: rgba(59, 130, 246, 0.5);
+            --success: #10b981;
+            --bg-gradient-start: #15254b;
+            --btn-gradient: linear-gradient(135deg, #2563eb, #1d4ed8);
+            --btn-text: #ffffff;
+            --btn-shadow: rgba(37, 99, 235, 0.4);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: radial-gradient(circle at 50% 10%, var(--bg-gradient-start) 0%, var(--bg-main) 60%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Background grid effect */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0; right: 0; bottom: 0; left: 0;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 30px 30px;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .auth-container {
+            width: 100%;
+            max-width: 480px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .auth-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 40px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 35px;
+        }
+
+        .auth-logo {
+            font-size: 56px;
+            color: var(--accent);
+            margin-bottom: 15px;
+            display: inline-block;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .auth-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .auth-subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            font-size: 14px;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .form-input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .form-input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .otp-input {
+            font-size: 32px;
+            letter-spacing: 10px;
+            text-align: center;
+            font-weight: 600;
+            font-family: 'Courier New', monospace;
+        }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+            padding: 13px 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .error-message i {
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .info-box {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .info-box strong {
+            color: var(--accent);
+        }
+
+        .timer {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 13px;
+            margin: 15px 0;
+        }
+
+        .timer.warning {
+            color: #fbbf24;
+            font-weight: 600;
+        }
+
+        .btn-auth {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--btn-gradient);
+            color: var(--btn-text);
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+            box-shadow: 0 0 20px var(--btn-shadow);
+        }
+
+        .btn-auth:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 25px var(--btn-shadow);
+        }
+
+        .btn-auth:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--accent);
+            border: 1px solid var(--accent);
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+            margin-top: 10px;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(59, 130, 246, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .resend-link {
+            text-align: center;
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 15px;
+        }
+
+        .resend-link a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .resend-link a:hover {
+            text-decoration: underline;
+        }
+
+        .auth-divider {
+            margin: 25px 0;
+            text-align: center;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .auth-link {
+            text-align: center;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .auth-link a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .auth-link a:hover {
+            color: #60a5fa;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <!-- OTP Verification Header -->
+            <div class="auth-header">
+                <div class="auth-logo">
+                    <i class="fa-solid fa-mobile-screen-button"></i>
+                </div>
+                <h1 class="auth-title">Verify OTP</h1>
+                <p class="auth-subtitle">Enter the 6-digit code sent to your mobile</p>
+            </div>
+
+            <!-- Error Message -->
+            {% if error %}
+            <div class="error-message">
+                <i class="fa-solid fa-exclamation-circle"></i>
+                <span>{{ error }}</span>
+            </div>
+            {% endif %}
+
+            <!-- Info Box -->
+            <div class="info-box">
+                We've sent a 6-digit OTP to your registered mobile number. <strong>It will expire in 10 minutes.</strong>
+            </div>
+
+            <!-- OTP Verification Form -->
+            <form method="POST" action="/verify-otp">
+                <input type="hidden" name="username" value="{{ username }}">
+                
+                <div class="form-group">
+                    <label for="otp" class="form-label">
+                        <i class="fa-solid fa-hashtag"></i> Enter OTP
+                    </label>
+                    <input
+                        type="text"
+                        id="otp"
+                        name="otp"
+                        class="form-input otp-input"
+                        placeholder="000000"
+                        inputmode="numeric"
+                        pattern="[0-9]{6}"
+                        minlength="6"
+                        maxlength="6"
+                        required
+                        autofocus
+                    >
+                </div>
+
+                <!-- Timer -->
+                <div class="timer" id="timer">
+                    ⏱️ OTP expires in: <span id="countdown">10:00</span>
+                </div>
+
+                <button type="submit" class="btn-auth">
+                    <i class="fa-solid fa-check"></i> Verify OTP
+                </button>
+            </form>
+
+            <!-- Resend OTP -->
+            <div class="resend-link">
+                Didn't receive the OTP? <a href="/forgot-password">Request a new one</a>
+            </div>
+
+            <!-- Back to Login -->
+            <button type="button" class="btn-secondary" onclick="window.location.href='/login'">
+                <i class="fa-solid fa-arrow-left"></i> Back to Login
+            </button>
+
+            <!-- Divider -->
+            <div class="auth-divider">
+                ─────────────────────
+            </div>
+
+            <!-- Help -->
+            <div class="auth-link">
+                Need help? <a href="/login">Return to login</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // OTP Countdown Timer
+        function startCountdown() {
+            let minutes = 10;
+            let seconds = 0;
+            
+            const interval = setInterval(() => {
+                // Decrement
+                if (seconds === 0 && minutes > 0) {
+                    minutes--;
+                    seconds = 59;
+                } else {
+                    seconds--;
+                }
+                
+                // Format display
+                const display = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                document.getElementById('countdown').textContent = display;
+                
+                // Warning when less than 2 minutes
+                const timerDiv = document.getElementById('timer');
+                if (minutes < 2) {
+                    timerDiv.classList.add('warning');
+                }
+                
+                // Disable form when expired
+                if (minutes === 0 && seconds === 0) {
+                    clearInterval(interval);
+                    document.getElementById('otp').disabled = true;
+                    document.querySelector('button[type="submit"]').disabled = true;
+                    document.getElementById('timer').innerHTML = '⏱️ OTP has <span style="color: #ef4444;">EXPIRED</span>';
+                }
+            }, 1000);
+        }
+        
+        // Start countdown on page load
+        document.addEventListener('DOMContentLoaded', startCountdown);
+        
+        // Auto-focus next input on OTP entry (optional UX enhancement)
+        document.getElementById('otp').addEventListener('input', (e) => {
+            // Allow only numbers
+            e.target.value = e.target.value.replace(/[^0-9]/g, '');
+        });
+    </script>
+</body>
+</html>

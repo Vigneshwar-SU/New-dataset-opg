@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scan History - Dental OPG AI Diagnostic System</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
+</head>
+<body>
+
+<div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <i class="fa-solid fa-tooth"></i>
+            <span>Dental OPG AI</span>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/" class="nav-link">
+                <i class="fa-solid fa-house"></i> Dashboard
+            </a>
+            <a href="/scan-history" class="nav-link active">
+                <i class="fa-solid fa-history"></i> Scan History
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Topbar -->
+        <header class="topbar">
+            <div class="top-nav">
+                <a href="/">Home</a>
+                <a href="/scan-history">Scan History</a>
+            </div>
+            <div class="user-profile">
+                <div class="profile-dropdown">
+                    <div class="profile-info" onclick="toggleProfileMenu()">
+                        <i class="fa-solid fa-circle-user"></i>
+                        <span class="username">{{ current_user.username }}</span>
+                        <i class="fa-solid fa-chevron-down" style="font-size: 0.8rem;"></i>
+                    </div>
+                    <div class="profile-menu" id="profileMenu">
+                        <a href="/scan-history" class="menu-item">
+                            <i class="fa-solid fa-history"></i> Scan History
+                        </a>
+                        <a href="/logout" class="menu-item logout-item">
+                            <i class="fa-solid fa-sign-out-alt"></i> Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content Area -->
+        <div class="content-area">
+            <section class="tab-content active-tab">
+                <h2>
+                    <i class="fa-solid fa-history"></i> Your Scan History
+                </h2>
+                <p class="section-desc">View all your previous OPG scans and their predictions</p>
+                
+                {% if scans %}
+                <div class="history-container">
+                    {% for scan in scans %}
+                    <div class="glass-card history-record">
+                        <div class="history-image">
+                            <img src="{{ scan.image_path }}" alt="Scan">
+                        </div>
+                        <div class="history-details">
+                            <h3>{{ scan.prediction }}</h3>
+                            <div class="history-meta">
+                                <p>
+                                    <i class="fa-solid fa-file"></i>
+                                    <strong>Filename:</strong> {{ scan.filename }}
+                                </p>
+                                <p>
+                                    <i class="fa-solid fa-calendar"></i>
+                                    <strong>Date:</strong> {{ scan.timestamp.strftime('%B %d, %Y') }}
+                                </p>
+                                <p>
+                                    <i class="fa-solid fa-clock"></i>
+                                    <strong>Time:</strong> {{ scan.timestamp.strftime('%I:%M %p') }}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="history-actions">
+                            <a href="/download-report/{{ scan.id }}" class="btn-small" title="Download PDF Report">
+                                <i class="fa-solid fa-file-pdf"></i> Download PDF
+                            </a>
+                            <button class="btn-small" onclick="downloadImage('{{ scan.image_path }}', '{{ scan.filename }}')" title="Download Image">
+                                <i class="fa-solid fa-image"></i> Download Image
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="glass-card empty-state" style="text-align: center; padding: 80px 40px;">
+                    <i class="fa-solid fa-folder-open" style="font-size: 4rem; margin-bottom: 20px; color: #4facfe; opacity: 0.5;"></i>
+                    <h3>No Scans Yet</h3>
+                    <p>You haven't uploaded any scans yet. Start by uploading your first OPG X-ray image.</p>
+                    <a href="/" class="btn-primary" style="margin-top: 30px; display: inline-block; text-decoration: none;">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Go to Dashboard
+                    </a>
+                </div>
+                {% endif %}
+            </section>
+        </div>
+    </main>
+</div>
+
+<!-- Scripts -->
+<script>
+    // Profile Menu Toggle
+    function toggleProfileMenu() {
+        const profileMenu = document.getElementById('profileMenu');
+        profileMenu.classList.toggle('active');
+    }
+
+    // Close profile menu when clicking outside
+    document.addEventListener('click', function(event) {
+        const profileMenu = document.getElementById('profileMenu');
+        const profileDropdown = event.target.closest('.profile-dropdown');
+        
+        if (!profileDropdown && profileMenu.classList.contains('active')) {
+            profileMenu.classList.remove('active');
+        }
+    });
+
+    // Download image function
+    function downloadImage(imagePath, filename) {
+        const link = document.createElement('a');
+        link.href = imagePath;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+</script>
+
+<style>
+    .history-container {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .history-record {
+        display: grid;
+        grid-template-columns: 250px 1fr auto;
+        gap: 25px;
+        align-items: start;
+        padding: 20px;
+        transition: all 0.3s ease;
+    }
+
+    .history-record:hover {
+        border-color: var(--accent);
+        box-shadow: 0 0 20px var(--accent-glow);
+    }
+
+    .history-image {
+        width: 250px;
+        height: 180px;
+        border-radius: 12px;
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    .history-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .history-details h3 {
+        font-size: 1.3rem;
+        color: var(--text-primary);
+        margin-bottom: 15px;
+    }
+
+    .history-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .history-meta p {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .history-meta strong {
+        color: var(--text-primary);
+        min-width: 80px;
+    }
+
+    .history-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .btn-small {
+        padding: 10px 16px;
+        background: var(--btn-gradient);
+        color: var(--btn-text);
+        border: none;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        white-space: nowrap;
+    }
+
+    .btn-small:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px var(--btn-shadow);
+    }
+
+    @media (max-width: 1024px) {
+        .history-record {
+            grid-template-columns: 1fr;
+        }
+
+        .history-image {
+            width: 100%;
+        }
+
+        .history-actions {
+            flex-direction: row;
+        }
+    }
+</style>
+
+</body>
+</html>

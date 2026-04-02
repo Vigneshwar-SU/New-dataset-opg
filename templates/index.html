@@ -43,18 +43,28 @@
     <main class="main-content">
         <!-- Topbar -->
         <header class="topbar">
-            <nav class="top-nav">
+            <div class="top-nav">
                 <a href="#" onclick="switchTab('dashboard')">Home</a>
                 <a href="#" onclick="switchTab('upload')">Upload</a>
                 <a href="#" onclick="switchTab('prediction')">Results</a>
                 <a href="#" onclick="switchTab('modelinfo')">Model Info</a>
                 <a href="#" onclick="switchTab('about')">About</a>
-            </nav>
+            </div>
             <div class="user-profile">
-                <i class="fa-regular fa-bell"></i>
-                <i class="fa-solid fa-gear"></i>
-                <div class="avatar">
-                    <img src="https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff" alt="User">
+                <div class="profile-dropdown">
+                    <div class="profile-info" onclick="toggleProfileMenu()">
+                        <i class="fa-solid fa-circle-user"></i>
+                        <span class="username">{{ current_user.username }}</span>
+                        <i class="fa-solid fa-chevron-down" style="font-size: 0.8rem;"></i>
+                    </div>
+                    <div class="profile-menu" id="profileMenu">
+                        <a href="/scan-history" class="menu-item">
+                            <i class="fa-solid fa-history"></i> Scan History
+                        </a>
+                        <a href="/logout" class="menu-item logout-item">
+                            <i class="fa-solid fa-sign-out-alt"></i> Logout
+                        </a>
+                    </div>
                 </div>
             </div>
         </header>
@@ -414,6 +424,22 @@
             }
         }, false);
     }
+
+    // Profile Menu Toggle
+    function toggleProfileMenu() {
+        const profileMenu = document.getElementById('profileMenu');
+        profileMenu.classList.toggle('active');
+    }
+
+    // Close profile menu when clicking outside
+    document.addEventListener('click', function(event) {
+        const profileMenu = document.getElementById('profileMenu');
+        const profileDropdown = event.target.closest('.profile-dropdown');
+        
+        if (!profileDropdown && profileMenu.classList.contains('active')) {
+            profileMenu.classList.remove('active');
+        }
+    });
 </script>
 
 </body>

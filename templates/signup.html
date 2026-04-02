@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - Dental OPG AI Diagnostic System</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            /* Dark Theme */
+            --bg-main: #060b19;
+            --sidebar-bg: #091227;
+            --glass-bg: rgba(16, 26, 50, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --accent: #3b82f6;
+            --accent-glow: rgba(59, 130, 246, 0.5);
+            --success: #10b981;
+            --bg-gradient-start: #15254b;
+            --btn-gradient: linear-gradient(135deg, #2563eb, #1d4ed8);
+            --btn-text: #ffffff;
+            --btn-shadow: rgba(37, 99, 235, 0.4);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: radial-gradient(circle at 50% 10%, var(--bg-gradient-start) 0%, var(--bg-main) 60%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Background grid effect */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0; right: 0; bottom: 0; left: 0;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 30px 30px;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .auth-container {
+            width: 100%;
+            max-width: 480px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .auth-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 40px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 35px;
+        }
+
+        .auth-logo {
+            font-size: 56px;
+            color: var(--accent);
+            margin-bottom: 15px;
+            display: inline-block;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .auth-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .auth-subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            font-size: 14px;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .form-input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .form-input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .password-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .password-container .form-input {
+            padding-right: 45px;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 18px;
+            padding: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-password:hover {
+            color: var(--accent);
+        }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+            padding: 13px 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .error-message i {
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .success-message {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #6ee7b7;
+            padding: 13px 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .success-message i {
+            font-size: 16px;
+        }
+
+        .success-message a {
+            color: var(--accent);
+            text-decoration: none;
+            margin-left: 5px;
+        }
+
+        .success-message a:hover {
+            text-decoration: underline;
+        }
+
+        .btn-auth {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--btn-gradient);
+            color: var(--btn-text);
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+            box-shadow: 0 0 20px var(--btn-shadow);
+        }
+
+        .btn-auth:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 25px var(--btn-shadow);
+        }
+
+        .btn-auth:active {
+            transform: translateY(0);
+        }
+
+        .password-requirements {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .password-requirements strong {
+            color: var(--text-primary);
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .password-requirements ul {
+            margin-left: 20px;
+            list-style: none;
+        }
+
+        .password-requirements li {
+            margin: 6px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .password-requirements li:before {
+            content: '✓';
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        .auth-divider {
+            margin: 25px 0;
+            text-align: center;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .auth-link {
+            text-align: center;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .auth-link a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .auth-link a:hover {
+            color: #60a5fa;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <!-- Signup Header -->
+            <div class="auth-header">
+                <div class="auth-logo">
+                    <i class="fa-solid fa-tooth"></i>
+                </div>
+                <h1 class="auth-title">Create Account</h1>
+                <p class="auth-subtitle">Join Dental OPG AI today</p>
+            </div>
+
+            <!-- Success Message -->
+            {% if success %}
+            <div class="success-message">
+                <i class="fa-solid fa-check-circle"></i>
+                <div>
+                    Account created successfully! <a href="/login">Login here</a>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Error Message -->
+            {% if error %}
+            <div class="error-message">
+                <i class="fa-solid fa-exclamation-circle"></i>
+                <span>{{ error }}</span>
+            </div>
+            {% endif %}
+
+            <!-- Signup Form -->
+            <form method="POST" action="/signup">
+                <div class="form-group">
+                    <label for="username" class="form-label">
+                        <i class="fa-solid fa-user"></i> Username
+                    </label>
+                    <input
+                        type="text"
+                        id="username"
+                        name="username"
+                        class="form-input"
+                        placeholder="DOCT followed by 8 digits (e.g., DOCT12345678)"
+                        pattern="DOCT[0-9]{8}"
+                        maxlength="12"
+                        required
+                        autofocus
+                    >
+                    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 6px;">
+                        Format: <strong>DOCT</strong> + 8 numbers (e.g., DOCT12345678)
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="mobile" class="form-label">
+                        <i class="fa-solid fa-phone"></i> Mobile Number
+                    </label>
+                    <input
+                        type="tel"
+                        id="mobile"
+                        name="mobile"
+                        class="form-input"
+                        placeholder="Enter your mobile number"
+                        pattern="[0-9]{10,}"
+                        minlength="10"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="password" class="form-label">
+                        <i class="fa-solid fa-lock"></i> Password
+                    </label>
+                    <div class="password-container">
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            class="form-input"
+                            placeholder="Enter a strong password"
+                            minlength="6"
+                            required
+                        >
+                        <button type="button" class="toggle-password" onclick="togglePassword('password')">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirm_password" class="form-label">
+                        <i class="fa-solid fa-lock"></i> Confirm Password
+                    </label>
+                    <div class="password-container">
+                        <input
+                            type="password"
+                            id="confirm_password"
+                            name="confirm_password"
+                            class="form-input"
+                            placeholder="Confirm your password"
+                            minlength="6"
+                            required
+                        >
+                        <button type="button" class="toggle-password" onclick="togglePassword('confirm_password')">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-auth">
+                    <i class="fa-solid fa-user-plus"></i> Create Account
+                </button>
+            </form>
+
+            <!-- Password Requirements -->
+            <div class="password-requirements">
+                <strong>Password Requirements:</strong>
+                <ul>
+                    <li>At least 6 characters</li>
+                    <li>Passwords must match</li>
+                    <li>Username must be 3+ characters</li>
+                </ul>
+            </div>
+
+            <!-- Login Link -->
+            <div class="auth-divider">
+                ─────────────────────
+            </div>
+
+            <div class="auth-link">
+                Already have an account? <a href="/login">Login here</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function togglePassword(fieldId) {
+            const field = document.getElementById(fieldId);
+            const button = event.target.closest('.toggle-password');
+            const icon = button.querySelector('i');
+            
+            if (field.type === 'password') {
+                field.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                field.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+    </script>
+</body>
+</html>
