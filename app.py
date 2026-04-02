@@ -8,6 +8,8 @@ from flask import Flask, render_template, request, send_from_directory, redirect
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from flask_sqlalchemy import SQLAlchemy
 from tensorflow.keras.preprocessing import image
+from tensorflow.keras.applications import MobileNetV2
+from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
 from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash, check_password_hash
 from reportlab.lib.pagesizes import letter
@@ -269,9 +271,20 @@ with app.app_context():
     db.create_all()
 
 # ----------------Load Model ----------------
-print("Loading model...")
+print("Loading Main Diagnosis Model...")
 model = load_model('hypervision_OPG_model.h5')
 print("Model loaded successfully!")
+
+print("Loading Validation Identity Model (MobileNetV2)...")
+try:
+    # 224x224 because MobileNetV2 was trained on it
+    ood_model = MobileNetV2(input_shape=(224, 224, 3), include_top=False, weights='imagenet', pooling='avg')
+    opg_center = np.load('opg_center.npy')
+    VALIDATION_ACTIVE = True
+    print("OOD validation active.")
+except Exception as e:
+    print(f"OOD validation disabled (Missing opg_center.npy or network error). Error: {e}")
+    VALIDATION_ACTIVE = False
 
 # ---------------- Model Settings ----------------
 img_size = (299, 299)
@@ -498,29 +511,67 @@ def index():
             img_array = np.expand_dims(img_array, axis=0)
             img_array = img_array / 255.0
 
+            # ----- Validation Verification (AI-based OOD Detection) -----
+            is_invalid = False
+            
+            # First layer defense: Basic color and brightness checks
+            color_std_mean = np.mean(np.std(img_array[0], axis=-1))
+            img_gray = np.mean(img_array[0], axis=-1)
+            img_mean = np.mean(img_gray)
+            
+            if color_std_mean > 0.05 or img_mean > 0.90:
+                is_invalid = True
+                
+            # Second layer defense: Deep embedding signature check
+            if not is_invalid and VALIDATION_ACTIVE:
+                # Load image specifically for MobileNetV2 (needs 224x224 RGB)
+                val_img = image.load_img(save_path, target_size=(224, 224))
+                val_x = image.img_to_array(val_img)
+                val_x = np.expand_dims(val_x, axis=0)
+                val_x = preprocess_input(val_x)
+                
+                # Extract features
+                features = ood_model.predict(val_x, verbose=0)
+                
+                # Calculate distance from known OPG centroid profile
+                dist = np.linalg.norm(features[0] - opg_center)
+                
+                # If distance > 25.0, image structure is alien to an OPG scan (graphs trigger ~27+)
+                if dist > 25.0:
+                    is_invalid = True
+            
             # ----- Prediction -----
             preds = model.predict(img_array)
-            class_index = np.argmax(preds, axis=1)[0]
-            prediction_label = classes[class_index]
+            max_confidence = np.max(preds[0])
 
-            class_prob_pairs = list(zip(classes, preds[0]))
+            if is_invalid or max_confidence < 0.45:
+                prediction_label = "Invalid Image: Not a valid Teeth OPG Scan"
+                class_prob_pairs = []
+                image_path = f"/uploads/{filename}"
+                
+                # We don't save invalid scans to the user's history
+            else:
+                class_index = np.argmax(preds, axis=1)[0]
+                prediction_label = classes[class_index]
 
-            # IMPORTANT: browser-accessible URL
-            image_path = f"/uploads/{filename}"
-            
-            # Save to scan history with probabilities
-            scan = ScanHistory(
-                user_id=current_user.id,
-                filename=filename,
-                prediction=prediction_label,
-                image_path=image_path,
-                caries_prob=float(preds[0][0]) * 100,
-                decayed_prob=float(preds[0][1]) * 100,
-                ectopic_prob=float(preds[0][2]) * 100,
-                healthy_prob=float(preds[0][3]) * 100
-            )
-            db.session.add(scan)
-            db.session.commit()
+                class_prob_pairs = list(zip(classes, preds[0]))
+
+                # IMPORTANT: browser-accessible URL
+                image_path = f"/uploads/{filename}"
+                
+                # Save to scan history with probabilities
+                scan = ScanHistory(
+                    user_id=current_user.id,
+                    filename=filename,
+                    prediction=prediction_label,
+                    image_path=image_path,
+                    caries_prob=float(preds[0][0]) * 100,
+                    decayed_prob=float(preds[0][1]) * 100,
+                    ectopic_prob=float(preds[0][2]) * 100,
+                    healthy_prob=float(preds[0][3]) * 100
+                )
+                db.session.add(scan)
+                db.session.commit()
 
     return render_template(
         'index.html',
